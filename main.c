@@ -164,7 +164,7 @@ void senddata2()
 	delay1(1000);
 }
 
-void Timer0_rountine(void) interrupt 1
+void Timer0_rountine(void) interrupt 1//计算心率
 {                       
   int N;
 	unsigned char i;
@@ -174,7 +174,7 @@ void Timer0_rountine(void) interrupt 1
 	EA=0; 	
 	TL0=T0MS;
 	TH0=T0MS>>8;				
-  Signal = analogRead(PulsePin);              
+  Signal = analogRead(PulsePin);   //读取模拟信号           
   sampleCounter += 2;                        
   N = sampleCounter - lastBeatTime; 
 	if(j>9)j=1;
@@ -219,7 +219,7 @@ void Timer0_rountine(void) interrupt 1
       rate[9] = IBI;                          
       runningTotal += rate[9];                
       runningTotal /= 10;                     
-      BPM = 60000/runningTotal;
+      BPM = 60000/runningTotal;//最终得到心率值
 			
 			//put_bigpixel(h,Signal);
       
