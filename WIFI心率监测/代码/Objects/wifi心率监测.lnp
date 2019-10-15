@@ -1,0 +1,9 @@
+".\Objects\STARTUP.obj",
+".\Objects\main.obj",
+".\Objects\AD.obj",
+".\Objects\lcd.obj",
+".\Objects\pulsesensor.obj",
+".\Objects\ESP8266.obj",
+".\Objects\st7735.obj" 
+TO ".\Objects\wifi心率监测" 
+PRINT(".\Listings\wifi心率监测.m51") RAMSIZE(256) 

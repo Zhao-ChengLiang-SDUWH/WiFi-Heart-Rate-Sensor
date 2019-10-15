@@ -1,0 +1,61 @@
+C51 COMPILER V9.59.0.0   AD                                                                10/14/2019 22:32:05 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE AD
+OBJECT MODULE PLACED IN .\Objects\AD.obj
+COMPILER INVOKED BY: D:\C51\BIN\C51.EXE AD.c COMPACT OPTIMIZE(8,SPEED) BROWSE INCDIR(.\headfile) DEBUG OBJECTEXTEND PRIN
+                    -T(.\Listings\AD.lst) TABS(2) OBJECT(.\Objects\AD.obj)
+
+line level    source
+
+   1          
+   2          #include <STC12C5A60S2.h>
+   3          #include <AD.h>
+   4          #define ADC_POWER 0x80      //ADC POWER CONTROL BIT
+   5          #define ADC_FLAG 0x10     //ADC COMPLETE FLAG
+   6          #define ADC_START 0x08;     //ADC START CONTROL BIT
+   7          #define ADC_SPEEDLL 0x00    //540 CLOCKS
+   8          #define ADC_SPEEDL 0x20     //360 CLOCKS
+   9          #define ADC_SPEEDH 0x40     //180 CLOCKS
+  10          #define ADC_SPEEDHH 0x60    //90 CLOCKS
+  11          #define ADC_MASK 0x01
+  12          
+  13          
+  14          
+  15          
+  16          
+  17          void ADC_init(unsigned char channel)
+  18          {
+  19   1        P1ASF=ADC_MASK<<channel;  //enable PlusePin as ADC INPUT
+  20   1        ADC_RES=0;  //clear former ADC result
+  21   1        ADC_RESL=0; //clear former ADC result
+  22   1        AUXR1 |= 0x04;  //adjust the format of ADC result
+  23   1        ADC_CONTR=channel|ADC_POWER|ADC_SPEEDLL|ADC_START;  //power on ADC and start conversion
+  24   1      }
+  25          
+  26          unsigned int analogRead(unsigned char channel)
+  27          {
+  28   1        unsigned int result;
+  29   1      
+  30   1        ADC_CONTR &=!ADC_FLAG;  //clear ADC FLAG
+  31   1        result=ADC_RES;
+  32   1        result=result<<8;
+  33   1        result+=ADC_RESL;
+  34   1        ADC_CONTR|=channel|ADC_POWER|ADC_SPEEDLL|ADC_START;
+  35   1        return result;
+  36   1      }
+*** WARNING C316 IN LINE 36 OF AD.c: unterminated conditionals
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     52    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

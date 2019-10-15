@@ -1,0 +1,327 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              10/14/2019 22:32:05 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\C51\BIN\C51.EXE main.c COMPACT OPTIMIZE(8,SPEED) BROWSE INCDIR(.\headfile) DEBUG OBJECTEXTEND PR
+                    -INT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          
+   2          #include "stdio.h"
+   3          #include <lcd.h>
+   4          #include <AD.h>
+   5          #include <ESP8266.h>
+   6          #include <st7735.h>
+   7          #define false 0
+   8          #define true 1
+   9          #define FOSC 11059200L    
+  10          #define BAUD 115200       
+  11          #define T0MS (65536-FOSC/12/500)    
+  12          #define MCU_STC12
+  13          
+  14          
+  15          
+  16          void UART_init(void); 
+  17          void ADC_init(unsigned char channel);
+  18          void T0_init(void);
+  19          
+  20          void UART_send(char dat);
+  21          
+  22          unsigned char PulsePin = 0;       // Pulse Sensor purple wire connected to analog pin 0
+  23          //sbit blinkPin = P1^7;                // pin to blink led at each beat
+  24          //sbit fadePin = P2^3;                  // pin to do fancy classy fading blink at each beat
+  25          //sbit led1 = P2^1;
+  26          //sbit led2 = P2^2;
+  27          int fadeRate = 0;                 // used to fade LED on with PWM on fadePin
+  28          
+  29          
+  30          // these variables are volatile because they are used during the interrupt service routine!
+  31          volatile unsigned int BPM;                   // used to hold the pulse rate
+  32          volatile unsigned int Signal;                // holds the incoming raw data
+  33          volatile unsigned int IBI = 600;             // holds the time between beats, must be seeded! 
+  34          volatile bit Pulse = false;     // true when pulse wave is high, false when it's low
+  35          volatile bit QS = false;        // becomes true when Arduoino finds a beat.
+  36          volatile int rate[10];                    // array to hold last ten IBI values
+  37          volatile unsigned long sampleCounter = 0;          // used to determine pulse timing
+  38          volatile unsigned long lastBeatTime = 0;           // used to find IBI
+  39          volatile int Peak =512;                      // used to find peak in pulse wave, seeded
+  40          volatile int Trough = 512;                     // used to find trough in pulse wave, seeded
+  41          volatile int thresh = 512;                // used to find instant moment of heart beat, seeded
+  42          volatile int amp = 100;                   // used to hold amplitude of pulse waveform, seeded
+  43          volatile bit firstBeat = true;        // used to seed rate array so we startup with reasonable BPM
+  44          volatile bit secondBeat = false;      // used to seed rate array so we startup with reasonable BPM
+  45          static unsigned char order=0;
+  46          unsigned int HR[]={0,0,0,0,0,0,0,0,0,0};
+  47          unsigned char code ucForum0[]="Heart Rate ";
+  48          unsigned char code ucForum1[]="BPM:";
+  49          unsigned char DisBuff[4]={0};
+  50          unsigned char heart_rate1[]="{\"heart_rate1\":000}";
+  51          unsigned char heart_rate2[]="{\"heart_rate1\":00}";
+  52          unsigned char j=1;
+  53          unsigned char h=13;
+  54          void sys_init()
+C51 COMPILER V9.59.0.0   MAIN                                                              10/14/2019 22:32:05 PAGE 2   
+
+  55          {
+  56   1        UART_init();             //串口初始化
+  57   1        ADC_init(PulsePin);              //AD转换
+  58   1        LcdInit();        //LCD1602初始化
+  59   1        ESPinit();        //ESP8266初始化
+  60   1        #ifdef MCU_STC12
+  61   1        P3M1 &= ~(1<<2),  P3M0 |=  (1<<2);  
+  62   1        #endif
+  63   1        lcd_initial(); // st7735 液晶屏初始化
+  64   1        dsp_single_colour(WHITE);
+  65   1        //清屏
+  66   1        
+  67   1      }
+  68          
+  69          void main(void)
+  70          {
+  71   1        
+  72   1        
+  73   1        
+  74   1          
+  75   1        sys_init();
+  76   1        showcoordinate();// 在液晶屏上显示坐标
+  77   1        LcdShowStr(0,0,"Initializing");
+  78   1        
+  79   1        LcdShowStr(0,0,ucForum0); //初始化
+  80   1          
+  81   1        LcdShowStr(0,1,ucForum1); //
+  82   1        T0_init();
+  83   1        while(1)
+  84   1        {
+  85   2          
+  86   2          LcdShowStr(5,1,DisBuff);  //在LCD1602上显示心率数值
+  87   2          //Display_ASCII8X16(10,10,DisBuff);
+  88   2          //Drawline(h,HR[j],h+10,HR[j+1]);
+  89   2          
+  90   2            
+  91   2        }
+  92   1        
+  93   1      }
+  94          
+  95          
+  96          
+  97          
+  98          
+  99          
+ 100          
+ 101          
+ 102          void UART_init(void)
+ 103          {
+ 104   1         PCON &= 0x7f;  
+ 105   1         SCON = 0x50;  
+ 106   1         BRT = 0xFD;    
+ 107   1         AUXR |= 0x04;  
+ 108   1         AUXR |= 0x01;  
+ 109   1         AUXR |= 0x10;  
+ 110   1      }
+ 111           
+ 112          void T0_init(void){     
+ 113   1        
+ 114   1        TMOD |= 0x01; //定时器0 模式1 每2ms中断
+ 115   1        TL0=T0MS;
+ 116   1        TH0=T0MS>>8;
+C51 COMPILER V9.59.0.0   MAIN                                                              10/14/2019 22:32:05 PAGE 3   
+
+ 117   1        TR0=1;    
+ 118   1        ET0=1;    
+ 119   1        EA=1;                 
+ 120   1      } 
+ 121          
+ 122          void senddata1()
+ 123          {
+ 124   1        
+ 125   1        sendString("AT+CIPSTART=\"TCP\",\"183.230.40.33\",80\r\n");//
+ 126   1        delay1(50);
+ 127   1        sendString("AT+CIPMODE=1\r\n");   
+ 128   1        delay1(50);
+ 129   1        sendString("AT+CIPSEND\r\n");     
+ 130   1        delay1(50);
+ 131   1        sendString("POST /devices/549699867/datapoints?type=3 HTTP/1.1\r\n");
+ 132   1        delay1(50);
+ 133   1        sendString("api-key:oFm0C6hnRqcKm6QtSFLc6nwzIZg=\r\n"); 
+ 134   1        delay1(50);
+ 135   1        sendString("Host:api.heclouds.com\r\n");  
+ 136   1        delay1(50);
+ 137   1        sendString("Content-Length:19\r\n"); 
+ 138   1        delay1(50);
+ 139   1        sendString("\r\n"); 
+ 140   1        delay1(100);
+ 141   1        sendString(heart_rate1);
+ 142   1        delay1(1000);
+ 143   1      }
+ 144          void senddata2()
+ 145          {
+ 146   1        
+ 147   1        sendString("AT+CIPSTART=\"TCP\",\"183.230.40.33\",80\r\n");//与中国移动onenet服务器建立tcp连�
+             -�
+ 148   1        delay1(50);
+ 149   1        sendString("AT+CIPMODE=1\r\n");   
+ 150   1        delay1(50);
+ 151   1        sendString("AT+CIPSEND\r\n");     //开始传输
+ 152   1        delay1(50);
+ 153   1        sendString("POST /devices/549699867/datapoints?type=3 HTTP/1.1\r\n");//设备id
+ 154   1        delay1(50);
+ 155   1        sendString("api-key:oFm0C6hnRqcKm6QtSFLc6nwzIZg=\r\n"); // apikey
+ 156   1        delay1(50);
+ 157   1        sendString("Host:api.heclouds.com\r\n");  
+ 158   1        delay1(50);
+ 159   1        sendString("Content-Length:18\r\n"); 
+ 160   1        delay1(50);
+ 161   1        sendString("\r\n"); 
+ 162   1        delay1(100);
+ 163   1        sendString(heart_rate2);
+ 164   1        delay1(1000);
+ 165   1      }
+ 166          
+ 167          void Timer0_rountine(void) interrupt 1
+ 168          {                       
+ 169   1        int N;
+ 170   1        unsigned char i;
+ 171   1        
+ 172   1        unsigned int runningTotal = 0;                  
+ 173   1      
+ 174   1        EA=0;   
+ 175   1        TL0=T0MS;
+ 176   1        TH0=T0MS>>8;        
+ 177   1        Signal = analogRead(PulsePin);              
+C51 COMPILER V9.59.0.0   MAIN                                                              10/14/2019 22:32:05 PAGE 4   
+
+ 178   1        sampleCounter += 2;                        
+ 179   1        N = sampleCounter - lastBeatTime; 
+ 180   1        if(j>9)j=1;
+ 181   1          
+ 182   1        if(Signal < thresh && N > (IBI/5)*3){       
+ 183   2          if (Signal < Trough){                       
+ 184   3            Trough = Signal;                        
+ 185   3          }
+ 186   2        }
+ 187   1      
+ 188   1        if(Signal > thresh && Signal > Peak){        
+ 189   2          Peak = Signal;                             
+ 190   2        }                                       
+ 191   1        if (N > 250){                                  
+ 192   2          if ( (Signal > thresh) && (Pulse == false) && (N > (IBI/5)*3) ){        
+ 193   3            Pulse = true;                              
+ 194   3      
+ 195   3            IBI = sampleCounter - lastBeatTime;         
+ 196   3            lastBeatTime = sampleCounter;               
+ 197   3      
+ 198   3            if(secondBeat){                        
+ 199   4              secondBeat = false;                  
+ 200   4              for(i=0; i<=9; i++){             
+ 201   5                rate[i] = IBI;                      
+ 202   5              }
+ 203   4            }
+ 204   3      
+ 205   3            if(firstBeat){                        
+ 206   4              firstBeat = false;                   
+ 207   4              secondBeat = true;                   
+ 208   4              EA=1;                               
+ 209   4              return;                              
+ 210   4            }   
+ 211   3      
+ 212   3      
+ 213   3      
+ 214   3            for(i=0; i<=8; i++){                
+ 215   4              rate[i] = rate[i+1];                  
+ 216   4              runningTotal += rate[i];             
+ 217   4            }
+ 218   3           
+ 219   3            rate[9] = IBI;                          
+ 220   3            runningTotal += rate[9];                
+ 221   3            runningTotal /= 10;                     
+ 222   3            BPM = 60000/runningTotal;
+ 223   3            
+ 224   3            //put_bigpixel(h,Signal);
+ 225   3            
+ 226   3            if(BPM>150)BPM=150;     
+ 227   3            if(BPM<40)BPM=40;     
+ 228   3            DisBuff[2]   = BPM%10+48;
+ 229   3            DisBuff[1]   = BPM%100/10+48; 
+ 230   3            DisBuff[0]   = BPM/100+48;     
+ 231   3            if(DisBuff[0]==48)
+ 232   3              DisBuff[0]=32;
+ 233   3            HR[j]=149-BPM;
+ 234   3            
+ 235   3            
+ 236   3            Drawline(h,HR[j-1],h+10,HR[j]);//画线
+ 237   3            j++;
+ 238   3            h=h+10;
+ 239   3            HR[0]=HR[9];
+C51 COMPILER V9.59.0.0   MAIN                                                              10/14/2019 22:32:05 PAGE 5   
+
+ 240   3            if(BPM>100)
+ 241   3         {
+ 242   4           heart_rate1[15]=BPM/100+'0';
+ 243   4           heart_rate1[16]=BPM%100/10+'0';
+ 244   4           heart_rate1[17]=BPM%10+'0';
+ 245   4          
+ 246   4           senddata1();
+ 247   4      
+ 248   4         }
+ 249   3         if (BPM<=100)
+ 250   3         {
+ 251   4           heart_rate2[15]=BPM/10+'0';
+ 252   4           heart_rate2[16]=BPM%10+'0';
+ 253   4          
+ 254   4           senddata2();//上传数据
+ 255   4           
+ 256   4         } 
+ 257   3            QS = true;                             
+ 258   3            
+ 259   3          }                       
+ 260   2        }
+ 261   1      
+ 262   1        if (Signal < thresh && Pulse == true){   
+ 263   2      
+ 264   2          Pulse = false;                         
+ 265   2          amp = Peak - Trough;                           
+ 266   2          thresh = amp/2 + Trough;                    
+ 267   2          Peak = thresh;                            
+ 268   2          Trough = thresh;
+ 269   2        }
+ 270   1      
+ 271   1        if (N > 2500){                           
+ 272   2          thresh = 512;                          
+ 273   2          Peak = 512;                               
+ 274   2          Trough = 512;                               
+ 275   2          lastBeatTime = sampleCounter;             
+ 276   2          firstBeat = true;                      
+ 277   2          secondBeat = false;                    
+ 278   2        }
+ 279   1        
+ 280   1        
+ 281   1        
+ 282   1        
+ 283   1        if(h>=150)
+ 284   1        {
+ 285   2          h=13;
+ 286   2          clean1();
+ 287   2        }
+ 288   1        
+ 289   1        EA=1;
+ 290   1        
+ 291   1      }
+*** WARNING C316 IN LINE 291 OF main.c: unterminated conditionals
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1543    ----
+   CONSTANT SIZE    =    256    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =    111       5
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+C51 COMPILER V9.59.0.0   MAIN                                                              10/14/2019 22:32:05 PAGE 6   
+
+   BIT SIZE         =      4    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)
