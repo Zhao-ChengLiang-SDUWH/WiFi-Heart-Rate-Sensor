@@ -260,7 +260,7 @@ Display_ASCII8X16(20,20,v);
 Hline(18,0,160 );
 Drawline(10,20,50,60);
 }
-void Vline(uint x,uint y1,uint y2)//绔栫嚎
+void Vline(uint x,uint y1,uint y2)//画竖线
 {
 	unsigned int i;
 	unsigned int j;
@@ -271,7 +271,7 @@ void Vline(uint x,uint y1,uint y2)//绔栫嚎
 		put_bigpixel(x,j,BLUE);
 	}
 }
-void Hline(uint y,uint x1,uint x2)//妯嚎
+void Hline(uint y,uint x1,uint x2)//横线
 {
 	unsigned int i;
 	unsigned int j;
@@ -281,7 +281,7 @@ void Hline(uint y,uint x1,uint x2)//妯嚎
 		put_bigpixel(j,y,BLUE);
 	}
 }
-void Drawline(uint x1,uint y1,uint x2,uint y2)//涓ょ偣杩炵嚎
+void Drawline(uint x1,uint y1,uint x2,uint y2)//两点连线
 {
   unsigned short t; 
   int xerr=0,yerr=0,delta_x,delta_y,distance; 
@@ -396,6 +396,7 @@ void Display_ASCII8X16(uint x0,uint y0,uchar *s) //显示一个字符
 		}
 	}     	
 }
+//字模
 uchar code Zk_ASCII8X16[]={
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
