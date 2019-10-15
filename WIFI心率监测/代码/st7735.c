@@ -19,21 +19,21 @@ void delay_ms(uint time)
 }
 
 
-//ÏòSPI×ÜÏß´«ÊäÒ»¸ö8Î»Êı¾İ
+//å‘SPIæ€»çº¿ä¼ è¾“ä¸€ä¸ª8ä½æ•°æ®
 void  SPI_WriteData(uchar Data)
 {
 	unsigned char i=0;
 	for(i=8;i>0;i--)
 	{
 		if(Data&0x80)	
-		sda=1; //Êä³öÊı¾İ
+		sda=1; //è¾“å‡ºæ•°æ®
 		else sda=0;
 		scl=0;
 		scl=1;
 		Data<<=1;
 	}
 }
-//ÏòÒº¾§ÆÁĞ´Ò»¸ö8Î»Ö¸Áî
+//å‘æ¶²æ™¶å±å†™ä¸€ä¸ª8ä½æŒ‡ä»¤
 void  Lcd_WriteIndex(uchar Data)
 {
 		
@@ -42,7 +42,7 @@ void  Lcd_WriteIndex(uchar Data)
 		SPI_WriteData(Data); 		
 		cs=1;
 }
-//ÏòÒº¾§ÆÁĞ´Ò»¸ö8Î»Êı¾İ
+//å‘æ¶²æ™¶å±å†™ä¸€ä¸ª8ä½æ•°æ®
 void  Lcd_WriteData(uchar Data)
 {	
 		unsigned char i=0;
@@ -51,14 +51,14 @@ void  Lcd_WriteData(uchar Data)
 		SPI_WriteData(Data); 	
 		cs=1;
 }
-//ÏòÒº¾§ÆÁĞ´Ò»¸ö16Î»Êı¾İ
+//å‘æ¶²æ™¶å±å†™ä¸€ä¸ª16ä½æ•°æ®
 void  LCD_WriteData_16Bit(unsigned int Data)
 {
 	unsigned char i=0;
 	cs=0;
 	rs=1;
-	SPI_WriteData(Data>>8); 	//Ğ´Èë¸ß8Î»Êı¾İ
-	SPI_WriteData(Data); 			//Ğ´ÈëµÍ8Î»Êı¾İ
+	SPI_WriteData(Data>>8); 	//å†™å…¥é«˜8ä½æ•°æ®
+	SPI_WriteData(Data); 			//å†™å…¥ä½8ä½æ•°æ®
 	cs=1;
 
 }
@@ -71,7 +71,7 @@ void Reset()
     delay_ms(100);
 }
 //////////////////////////////////////////////////////////////////////////////////////////////
-//Òº¾§ÆÁ³õÊ¼»¯ for S6D02A1
+//æ¶²æ™¶å±åˆå§‹åŒ– for S6D02A1
 void lcd_initial()
 {	Reset();//Reset before LCD Init.
 		
@@ -125,9 +125,9 @@ void lcd_initial()
 	
 	Lcd_WriteIndex(0x36); //MX, MY, RGB mode 
 #ifdef USE_LANDSCAPE
-	Lcd_WriteData(0xA8); //ÊúÆÁC8 ºáÆÁ08 A8
+	Lcd_WriteData(0xA8); //ç«–å±C8 æ¨ªå±08 A8
 #else
-	Lcd_WriteData(0xC8); //ÊúÆÁC8 ºáÆÁ08 A8
+	Lcd_WriteData(0xC8); //ç«–å±C8 æ¨ªå±08 A8
 #endif		
 	//ST7735R Gamma Sequence
 	Lcd_WriteIndex(0xe0); 
@@ -226,13 +226,13 @@ void Lcd_SetRegion(unsigned int x_start,unsigned int y_start,unsigned int x_end,
 }
 
 
-void PutPixel(uint x_start,uint y_start,uint color)
+void PutPixel(uint x_start,uint y_start,uint color)//ç”»ä¸€ä¸ªåƒç´ ç‚¹
 {
 	Lcd_SetRegion(x_start,y_start,x_start+1,y_start+1);
 	LCD_WriteData_16Bit(color);
 	
 }
-void put_bigpixel(uint x,uint y,uint color)
+void put_bigpixel(uint x,uint y,uint color) //ç”»ä¸€ä¸ªå¤§å°4ä¸ªåƒç´ ç‚¹çš„åº—
 {
 	PutPixel(x,y,color);
 	PutPixel(x+1,y,color);
@@ -249,7 +249,7 @@ void dsp_single_colour(int color)
         	LCD_WriteData_16Bit(color);
 }
 
-void Display_Desc()
+void Display_Desc()//æ˜¾ç¤ºæµ‹è¯•
 { 
 unsigned char v[]={"0"};
 unsigned char i=80;
@@ -260,7 +260,7 @@ Display_ASCII8X16(20,20,v);
 Hline(18,0,160 );
 Drawline(10,20,50,60);
 }
-void Vline(uint x,uint y1,uint y2)//ç«–çº¿
+void Vline(uint x,uint y1,uint y2)//ç»”æ «åš
 {
 	unsigned int i;
 	unsigned int j;
@@ -271,7 +271,7 @@ void Vline(uint x,uint y1,uint y2)//ç«–çº¿
 		put_bigpixel(x,j,BLUE);
 	}
 }
-void Hline(uint y,uint x1,uint x2)//æ¨ªçº¿
+void Hline(uint y,uint x1,uint x2)//å¦¯î†åš
 {
 	unsigned int i;
 	unsigned int j;
@@ -281,7 +281,7 @@ void Hline(uint y,uint x1,uint x2)//æ¨ªçº¿
 		put_bigpixel(j,y,BLUE);
 	}
 }
-void Drawline(uint x1,uint y1,uint x2,uint y2)//ä¸¤ç‚¹è¿çº¿
+void Drawline(uint x1,uint y1,uint x2,uint y2)//æ¶“ã‚‡å£æ©ç‚µåš
 {
   unsigned short t; 
   int xerr=0,yerr=0,delta_x,delta_y,distance; 
@@ -315,16 +315,16 @@ if(yerr>distance)
 } 
 }  
 }  
-void clean1(void)
+void clean1(void) //æ¸…å±
 {
  	uchar i,j;
 	Lcd_SetRegion(13,0,160,110);
- 	for (i=20;i<110;i++)
+ 	for (i=0;i<110;i++)
     	for (j=13;j<160;j++)
         	LCD_WriteData_16Bit(WHITE);
 }
 	
-void showcoordinate()
+void showcoordinate() //æ˜¾ç¤ºåæ ‡
 {
 	
 	Vline(10,2,110);
@@ -347,8 +347,8 @@ void showcoordinate()
 	
 	
 	
-//æ˜¾ç¤ºä¸€ä¸ªå­—ç¬¦
-void Display_ASCII8X16(uint x0,uint y0,uchar *s)
+
+void Display_ASCII8X16(uint x0,uint y0,uchar *s) //æ˜¾ç¤ºä¸€ä¸ªå­—ç¬¦
 {
 	int i,j,k,x,y,xx;
 	
