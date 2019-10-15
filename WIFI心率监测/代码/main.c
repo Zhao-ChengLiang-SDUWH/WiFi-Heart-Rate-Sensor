@@ -43,10 +43,10 @@ volatile int amp = 100;                   // used to hold amplitude of pulse wav
 volatile bit firstBeat = true;        // used to seed rate array so we startup with reasonable BPM
 volatile bit secondBeat = false;      // used to seed rate array so we startup with reasonable BPM
 static unsigned char order=0;
-unsigned int HR[]={0,0,0,0,0,0,0,0,0,0};
+unsigned int HR[]={0,0,0,0,0,0,0,0,0,0};//定义一个数组 存储上10个心率值 供画图使用
 unsigned char code ucForum0[]="Heart Rate ";
 unsigned char code ucForum1[]="BPM:";
-unsigned char DisBuff[4]={0};
+unsigned char DisBuff[4]={0};//lcd显示的心率值
 unsigned char heart_rate1[]="{\"heart_rate1\":000}";
 unsigned char heart_rate2[]="{\"heart_rate1\":00}";
 unsigned char j=1;
@@ -66,7 +66,7 @@ void sys_init()
 	
 }
 
-void main(void)
+void main(void)//主要功能通过中断函数实现  main函数较简单
 {
 	
   
@@ -119,7 +119,7 @@ void T0_init(void){
   EA=1;                 
 } 
 
-void senddata1()
+void senddata1()//ESP8266上传数据 下同
 {
 	
 	sendString("AT+CIPSTART=\"TCP\",\"183.230.40.33\",80\r\n");//
@@ -174,7 +174,7 @@ void Timer0_rountine(void) interrupt 1
 	EA=0; 	
 	TL0=T0MS;
 	TH0=T0MS>>8;				
-  Signal = analogRead(PulsePin);              
+  Signal = analogRead(PulsePin);  //读取模拟信号            
   sampleCounter += 2;                        
   N = sampleCounter - lastBeatTime; 
 	if(j>9)j=1;
@@ -219,7 +219,7 @@ void Timer0_rountine(void) interrupt 1
       rate[9] = IBI;                          
       runningTotal += rate[9];                
       runningTotal /= 10;                     
-      BPM = 60000/runningTotal;
+      BPM = 60000/runningTotal;//最终求得心率值
 			
 			//put_bigpixel(h,Signal);
       
